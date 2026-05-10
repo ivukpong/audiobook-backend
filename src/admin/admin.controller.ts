@@ -1,6 +1,8 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards, UploadedFile, UseInterceptors, BadRequestException } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import * as mm from 'music-metadata';
+import { Readable } from 'stream';
 import { BooksService } from '../books/books.service';
 import { StorageService } from '../storage/storage.service';
 import { PrismaService } from '../common/prisma.service';
@@ -107,9 +109,21 @@ export class AdminController {
   async uploadMedia(@UploadedFile() file: Express.Multer.File) {
     if (!file) throw new BadRequestException('No file provided');
     if (!file.mimetype.startsWith('audio/')) throw new BadRequestException('File must be an audio file');
+    
+    // Extract duration from audio metadata
+    let durationSec = 0;
+    try {
+      const readable = Readable.from(file.buffer);
+      const metadata = await mm.parseStream(readable, { mimeType: file.mimetype }, { duration: true });
+      durationSec = Math.round(metadata.format.duration || 0);
+    } catch (err) {
+      console.warn('Failed to extract audio duration:', err);
+      throw new BadRequestException('Failed to read audio file metadata. Ensure file is a valid audio format.');
+    }
+    
     const key = `media/${Date.now()}-${this.sanitizeFileName(file.originalname)}`;
     const storageKey = await this.storage.uploadFile(key, file.buffer, file.mimetype);
-    return { storageKey };
+    return { storageKey, durationSec };
   }
 
   private sanitizeFileName(fileName: string) {

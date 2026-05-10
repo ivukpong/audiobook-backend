@@ -43,7 +43,7 @@ async function main() {
     coverStorageKey: string;
     price: number;
     currency: string;
-    durationSec: number;
+    durationSec?: number;
     mediaStorageKey: string;
     published: boolean;
     featured: boolean;

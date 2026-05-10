@@ -7,7 +7,7 @@ export class CreateBookDto {
   @ApiProperty() @IsString() coverStorageKey: string;
   @ApiProperty() @IsNumber() @Min(0) price: number;
   @ApiPropertyOptional() @IsOptional() @IsString() currency?: string;
-  @ApiProperty() @IsNumber() durationSec: number;
+  @ApiPropertyOptional() @IsOptional() @IsNumber() @Min(0) durationSec?: number;
   @ApiProperty() @IsString() mediaStorageKey: string;
   @ApiPropertyOptional() @IsOptional() @IsBoolean() published?: boolean;
   @ApiPropertyOptional() @IsOptional() @IsBoolean() featured?: boolean;

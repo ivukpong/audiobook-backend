@@ -54,7 +54,7 @@ model Book {
   coverStorageKey     String
   price               Float
   currency            String   @default("NGN")
-  durationSec         Int
+  durationSec         Int      @default(0)
   mediaStorageKey     String
   published           Boolean  @default(false)
   featured            Boolean  @default(false)

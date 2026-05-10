@@ -1,13 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service';
+import { StorageService } from '../storage/storage.service';
 import { CreateBookDto } from './dto/create-book.dto';
 
 @Injectable()
 export class BooksService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private storage: StorageService) {}
 
-  findAll(publishedOnly = true) {
-    return this.prisma.book.findMany({
+  async findAll(publishedOnly = true) {
+    const books = await this.prisma.book.findMany({
       where: publishedOnly ? { published: true } : {},
       orderBy: [{ featured: 'desc' }, { createdAt: 'desc' }],
       select: { id: true, title: true, author: true, description: true, coverStorageKey: true,
@@ -15,6 +16,11 @@ export class BooksService {
         spotifyUrl: true, appleBooksUrl: true, googlePlayUrl: true, audibleUrl: true, findawayUrl: true,
         createdAt: true },
     });
+    return books.map(book => ({
+      ...book,
+      coverUrl: book.coverStorageKey ? this.storage.getPublicUrl(book.coverStorageKey) : null,
+      coverStorageKey: undefined,
+    }));
   }
 
   async findOne(id: string) {
@@ -26,7 +32,11 @@ export class BooksService {
         createdAt: true },
     });
     if (!book) throw new NotFoundException('Book not found');
-    return book;
+    return {
+      ...book,
+      coverUrl: book.coverStorageKey ? this.storage.getPublicUrl(book.coverStorageKey) : null,
+      coverStorageKey: undefined,
+    };
   }
 
   create(dto: CreateBookDto) {
