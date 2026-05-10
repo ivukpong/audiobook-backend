@@ -1,0 +1,108 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  BUYER
+}
+
+enum PurchaseStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  name          String
+  passwordHash  String
+  role          Role      @default(BUYER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  purchases     Purchase[]
+  sessions      PlaybackSession[]
+  refreshTokens RefreshToken[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@map("refresh_tokens")
+}
+
+model Book {
+  id                  String   @id @default(uuid())
+  title               String
+  author              String
+  description         String   @db.Text
+  coverStorageKey     String
+  price               Float
+  currency            String   @default("NGN")
+  durationSec         Int
+  mediaStorageKey     String
+  published           Boolean  @default(false)
+  featured            Boolean  @default(false)
+
+  // Findaway / external distribution links
+  spotifyUrl          String?
+  appleBooksUrl       String?
+  googlePlayUrl       String?
+  audibleUrl          String?
+  findawayUrl         String?
+
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  purchases           Purchase[]
+  sessions            PlaybackSession[]
+
+  @@map("books")
+}
+
+model Purchase {
+  id           String         @id @default(uuid())
+  userId       String
+  bookId       String
+  user         User           @relation(fields: [userId], references: [id])
+  book         Book           @relation(fields: [bookId], references: [id])
+  amountPaid   Float
+  currency     String         @default("NGN")
+  paystackRef  String         @unique
+  status       PurchaseStatus @default(PENDING)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  @@unique([userId, bookId])
+  @@map("purchases")
+}
+
+model PlaybackSession {
+  id             String   @id @default(uuid())
+  userId         String
+  bookId         String
+  user           User     @relation(fields: [userId], references: [id])
+  book           Book     @relation(fields: [bookId], references: [id])
+  deviceId       String
+  progressSec    Int      @default(0)
+  lastActiveAt   DateTime @default(now())
+  createdAt      DateTime @default(now())
+
+  @@unique([userId, bookId, deviceId])
+  @@map("playback_sessions")
+}
