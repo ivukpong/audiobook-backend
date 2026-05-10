@@ -13,7 +13,6 @@ export class BooksService {
       orderBy: [{ featured: 'desc' }, { createdAt: 'desc' }],
       select: { id: true, title: true, author: true, description: true, coverStorageKey: true,
         price: true, currency: true, durationSec: true, featured: true, published: true,
-        spotifyUrl: true, appleBooksUrl: true, googlePlayUrl: true, audibleUrl: true, findawayUrl: true,
         createdAt: true },
     });
     return books.map(book => ({
@@ -28,7 +27,6 @@ export class BooksService {
       where: { id },
       select: { id: true, title: true, author: true, description: true, coverStorageKey: true,
         price: true, currency: true, durationSec: true, featured: true, published: true,
-        spotifyUrl: true, appleBooksUrl: true, googlePlayUrl: true, audibleUrl: true, findawayUrl: true,
         createdAt: true },
     });
     if (!book) throw new NotFoundException('Book not found');

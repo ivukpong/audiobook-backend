@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Body, UseGuards, Headers } from '@nestjs/common';
+import { Controller, Get, Post, Param, Body, UseGuards, Headers, Res, StreamableFile } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { PlaybackService } from './playback.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -37,5 +37,25 @@ export class PlaybackController {
     @Headers('x-device-id') deviceId: string,
   ) {
     return this.playback.getProgress(user.id, bookId, deviceId || 'default');
+  }
+
+  @Get('download/:bookId')
+  async downloadBook(
+    @CurrentUser() user: any,
+    @Param('bookId') bookId: string,
+    @Headers('x-device-id') deviceId: string,
+    @Res({ passthrough: true }) res: any,
+  ) {
+    const { stream, filename, mimeType } = await this.playback.getDownloadStream(
+      user.id,
+      bookId,
+      deviceId || 'default',
+    );
+
+    res.setHeader('Content-Type', mimeType);
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Cache-Control', 'private, no-store, no-cache, must-revalidate');
+
+    return new StreamableFile(stream);
   }
 }

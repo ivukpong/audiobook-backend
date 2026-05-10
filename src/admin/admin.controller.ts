@@ -108,22 +108,47 @@ export class AdminController {
   @UseInterceptors(FileInterceptor('file'))
   async uploadMedia(@UploadedFile() file: Express.Multer.File) {
     if (!file) throw new BadRequestException('No file provided');
-    if (!file.mimetype.startsWith('audio/')) throw new BadRequestException('File must be an audio file');
-    
+    const audioExtPattern = /\.(mp3|m4a|aac|wav|flac|ogg|oga|opus|webm)$/i;
+    const isAudioByMime = file.mimetype?.startsWith('audio/');
+    const isAudioByName = audioExtPattern.test(file.originalname || '');
+    if (!isAudioByMime && !isAudioByName) {
+      throw new BadRequestException('File must be an audio file');
+    }
+
     // Extract duration from audio metadata
     let durationSec = 0;
     try {
-      const readable = Readable.from(file.buffer);
-      const metadata = await mm.parseStream(readable, { mimeType: file.mimetype }, { duration: true });
+      const metadata = await mm.parseBuffer(
+        file.buffer,
+        {
+          mimeType: file.mimetype,
+          size: file.size,
+          path: file.originalname,
+        },
+        { duration: true },
+      );
       durationSec = Math.round(metadata.format.duration || 0);
     } catch (err) {
-      console.warn('Failed to extract audio duration:', err);
-      throw new BadRequestException('Failed to read audio file metadata. Ensure file is a valid audio format.');
+      console.warn('Primary duration extraction failed, retrying with stream parser:', err);
+      try {
+        const readable = Readable.from(file.buffer);
+        const metadata = await mm.parseStream(readable, { mimeType: file.mimetype }, { duration: true });
+        durationSec = Math.round(metadata.format.duration || 0);
+      } catch (streamErr) {
+        console.warn('Failed to extract audio duration; continuing upload with durationSec=0:', streamErr);
+      }
     }
-    
+
     const key = `media/${Date.now()}-${this.sanitizeFileName(file.originalname)}`;
     const storageKey = await this.storage.uploadFile(key, file.buffer, file.mimetype);
-    return { storageKey, durationSec };
+    return {
+      storageKey,
+      durationSec,
+      metadataWarning:
+        durationSec > 0
+          ? undefined
+          : 'Duration metadata could not be extracted. Upload succeeded; duration set to 0.',
+    };
   }
 
   private sanitizeFileName(fileName: string) {

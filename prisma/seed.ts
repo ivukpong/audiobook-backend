@@ -47,55 +47,45 @@ async function main() {
     mediaStorageKey: string;
     published: boolean;
     featured: boolean;
-    spotifyUrl?: string;
-    appleBooksUrl?: string;
-    findawayUrl?: string;
   }> = [
     {
       title: 'Deep Work',
       author: 'Cal Newport',
       description:
         'Rules for focused success in a distracted world. Learn how to achieve more in less time by mastering the art of deep focus.',
-      coverStorageKey: 'audora/covers/deep-work',
+      coverStorageKey: '',
       price: 4500,
       currency: 'NGN',
       durationSec: 21600,
       mediaStorageKey: 'audora/media/deep-work-sample',
       published: true,
       featured: true,
-      spotifyUrl: 'https://open.spotify.com/show/example',
-      appleBooksUrl: 'https://books.apple.com/example',
-      findawayUrl: 'https://buy.findawayvoices.com/deep-work',
     },
     {
       title: 'Atomic Habits',
       author: 'James Clear',
       description:
         'Tiny changes, remarkable results. An easy and proven way to build good habits and break bad ones.',
-      coverStorageKey: 'audora/covers/atomic-habits',
+      coverStorageKey: '',
       price: 3800,
       currency: 'NGN',
       durationSec: 19080,
       mediaStorageKey: 'audora/media/atomic-habits-sample',
       published: true,
       featured: true,
-      spotifyUrl: 'https://open.spotify.com/show/example2',
-      appleBooksUrl: 'https://books.apple.com/example2',
-      findawayUrl: 'https://buy.findawayvoices.com/atomic-habits',
     },
     {
       title: 'Zero to One',
       author: 'Peter Thiel',
       description:
         'Notes on startups, or how to build the future. Peter Thiel shares the contrarian thinking that drives successful ventures.',
-      coverStorageKey: 'audora/covers/zero-to-one',
+      coverStorageKey: '',
       price: 3500,
       currency: 'NGN',
       durationSec: 14400,
       mediaStorageKey: 'audora/media/zero-to-one-sample',
       published: true,
       featured: false,
-      findawayUrl: 'https://buy.findawayvoices.com/zero-to-one',
     },
   ];
 

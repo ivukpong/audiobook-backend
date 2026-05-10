@@ -1,4 +1,4 @@
-import { IsString, IsNumber, IsBoolean, IsOptional, IsUrl, Min } from 'class-validator';
+import { IsString, IsNumber, IsBoolean, IsOptional, Min } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 export class CreateBookDto {
   @ApiProperty() @IsString() title: string;
@@ -11,9 +11,4 @@ export class CreateBookDto {
   @ApiProperty() @IsString() mediaStorageKey: string;
   @ApiPropertyOptional() @IsOptional() @IsBoolean() published?: boolean;
   @ApiPropertyOptional() @IsOptional() @IsBoolean() featured?: boolean;
-  @ApiPropertyOptional() @IsOptional() @IsUrl() spotifyUrl?: string;
-  @ApiPropertyOptional() @IsOptional() @IsUrl() appleBooksUrl?: string;
-  @ApiPropertyOptional() @IsOptional() @IsUrl() googlePlayUrl?: string;
-  @ApiPropertyOptional() @IsOptional() @IsUrl() audibleUrl?: string;
-  @ApiPropertyOptional() @IsOptional() @IsUrl() findawayUrl?: string;
 }
