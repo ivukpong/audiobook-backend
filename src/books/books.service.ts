@@ -335,6 +335,17 @@ export class BooksService {
 
   async remove(id: string) {
     await this.findOne(id);
+
+    const purchaseCount = await (this.prisma as any).purchase.count({
+      where: { bookId: id },
+    });
+    if (purchaseCount > 0) {
+      throw new BadRequestException(
+        'This book has existing purchases and cannot be deleted. Unpublish it instead.',
+      );
+    }
+
+    await (this.prisma as any).playbackSession.deleteMany({ where: { bookId: id } });
     return (this.prisma as any).book.delete({ where: { id } });
   }
 }
