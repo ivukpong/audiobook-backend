@@ -2,6 +2,7 @@ import { Injectable, BadRequestException, NotFoundException } from '@nestjs/comm
 import { PrismaService } from '../common/prisma.service';
 import { PaystackService } from '../paystack/paystack.service';
 import { BooksService } from '../books/books.service';
+import { StorageService } from '../storage/storage.service';
 import { InitPurchaseDto } from './dto/init-purchase.dto';
 
 @Injectable()
@@ -10,6 +11,7 @@ export class PurchasesService {
     private prisma: PrismaService,
     private paystack: PaystackService,
     private books: BooksService,
+    private storage: StorageService,
   ) {}
 
   async initiate(userId: string, userEmail: string, dto: InitPurchaseDto) {
@@ -59,12 +61,22 @@ export class PurchasesService {
     return purchase;
   }
 
-  getUserLibrary(userId: string) {
-    return this.prisma.purchase.findMany({
+  async getUserLibrary(userId: string) {
+    const purchases = await this.prisma.purchase.findMany({
       where: { userId, status: 'COMPLETED' },
       include: { book: { select: { id: true, title: true, author: true, coverStorageKey: true, durationSec: true, currency: true, price: true } } },
       orderBy: { createdAt: 'desc' },
     });
+
+    return purchases.map((purchase) => ({
+      ...purchase,
+      book: {
+        ...purchase.book,
+        coverUrl: purchase.book.coverStorageKey
+          ? this.storage.getPublicUrl(purchase.book.coverStorageKey)
+          : null,
+      },
+    }));
   }
 
   async hasPurchased(userId: string, bookId: string): Promise<boolean> {
