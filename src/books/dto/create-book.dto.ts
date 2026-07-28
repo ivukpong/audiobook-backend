@@ -27,6 +27,10 @@ export class CreateBookDto {
   @ApiPropertyOptional() @IsOptional() @IsString() currency?: string;
   @ApiPropertyOptional() @IsOptional() @IsNumber() @Min(0) durationSec?: number;
   @ApiPropertyOptional() @IsOptional() @IsString() mediaStorageKey?: string;
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  isChaptered?: boolean;
   @ApiPropertyOptional({ type: [CreateBookChapterDto] })
   @IsOptional()
   @IsArray()

@@ -138,7 +138,16 @@ export class BooksService {
 
   async create(dto: CreateBookDto) {
     const chapters = this.normalizeChapters(dto.chapters);
+    const isChaptered = Boolean(dto.isChaptered);
     const mediaStorageKey = dto.mediaStorageKey?.trim() || chapters[0]?.mediaStorageKey;
+
+    if (isChaptered && chapters.length === 0) {
+      throw new BadRequestException('Chapter mode requires at least one chapter');
+    }
+
+    if (!isChaptered && !dto.mediaStorageKey?.trim() && chapters.length === 0) {
+      throw new BadRequestException('Single-file mode requires one media file');
+    }
 
     if (!mediaStorageKey && chapters.length === 0) {
       throw new BadRequestException('Provide at least one audio file or chapter');
@@ -191,6 +200,15 @@ export class BooksService {
 
     const chaptersProvided = Array.isArray(dto.chapters);
     const chapters = chaptersProvided ? this.normalizeChapters(dto.chapters) : undefined;
+    const isChaptered = dto.isChaptered !== undefined ? Boolean(dto.isChaptered) : (existing.chapters?.length || 0) > 0;
+
+    if (isChaptered && chaptersProvided && (chapters?.length || 0) === 0) {
+      throw new BadRequestException('Chapter mode requires at least one valid chapter audio file');
+    }
+
+    if (!isChaptered && dto.mediaStorageKey !== undefined && !dto.mediaStorageKey?.trim()) {
+      throw new BadRequestException('Single-file mode requires one media file');
+    }
 
     if (chaptersProvided && (chapters?.length || 0) === 0 && !dto.mediaStorageKey && !existing.mediaStorageKey) {
       throw new BadRequestException('At least one valid chapter audio file is required');
