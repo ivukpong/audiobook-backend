@@ -333,6 +333,14 @@ export class BooksService {
     return this.mapBookForClient(updated, true);
   }
 
+  async unpublishAll() {
+    const { count } = await (this.prisma as any).book.updateMany({
+      where: { published: true },
+      data: { published: false },
+    });
+    return { count };
+  }
+
   async remove(id: string) {
     await this.findOne(id);
 

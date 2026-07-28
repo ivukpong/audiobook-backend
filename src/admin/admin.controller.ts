@@ -30,6 +30,9 @@ export class AdminController {
   @Post('books')
   createBook(@Body() dto: CreateBookDto) { return this.books.create(dto); }
 
+  @Patch('books/unpublish-all')
+  unpublishAllBooks() { return this.books.unpublishAll(); }
+
   @Patch('books/:id')
   updateBook(@Param('id') id: string, @Body() dto: Partial<CreateBookDto>) { return this.books.update(id, dto); }
 
