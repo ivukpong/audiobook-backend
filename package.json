@@ -4,7 +4,7 @@
   "description": "Audora — audiobook platform backend",
   "scripts": {
     "build": "nest build",
-    "start": "node dist/main",
+    "start": "prisma migrate deploy && node dist/main",
     "start:dev": "nest start --watch",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
@@ -28,6 +28,7 @@
     "music-metadata": "^11.12.3",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
+    "prisma": "^5.14.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "uuid": "^10.0.0"
@@ -38,7 +39,6 @@
     "@types/node": "^20.14.0",
     "@types/passport-jwt": "^4.0.1",
     "@types/uuid": "^10.0.0",
-    "prisma": "^5.14.0",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.4.5"
