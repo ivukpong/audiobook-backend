@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Body, UseGuards, Headers, Res, StreamableFile } from '@nestjs/common';
+import { Controller, Get, Post, Param, Body, UseGuards, Headers, Res, StreamableFile, Query } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { PlaybackService } from './playback.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -16,8 +16,9 @@ export class PlaybackController {
     @CurrentUser() user: any,
     @Param('bookId') bookId: string,
     @Headers('x-device-id') deviceId: string,
+    @Query('chapterId') chapterId?: string,
   ) {
-    return this.playback.getStreamUrl(user.id, bookId, deviceId || 'default');
+    return (this.playback as any).getStreamUrl(user.id, bookId, deviceId || 'default', chapterId);
   }
 
   @Post('progress/:bookId')
@@ -26,8 +27,17 @@ export class PlaybackController {
     @Param('bookId') bookId: string,
     @Headers('x-device-id') deviceId: string,
     @Body('progressSec') progressSec: number,
+    @Body('chapterOrder') chapterOrder?: number,
+    @Body('chapterProgressSec') chapterProgressSec?: number,
   ) {
-    return this.playback.saveProgress(user.id, bookId, deviceId || 'default', progressSec);
+    return (this.playback as any).saveProgress(
+      user.id,
+      bookId,
+      deviceId || 'default',
+      progressSec,
+      chapterOrder,
+      chapterProgressSec,
+    );
   }
 
   @Get('progress/:bookId')
@@ -44,12 +54,14 @@ export class PlaybackController {
     @CurrentUser() user: any,
     @Param('bookId') bookId: string,
     @Headers('x-device-id') deviceId: string,
+    @Query('chapterId') chapterId: string | undefined,
     @Res({ passthrough: true }) res: any,
   ) {
-    const { stream, filename, mimeType } = await this.playback.getDownloadStream(
+    const { stream, filename, mimeType } = await (this.playback as any).getDownloadStream(
       user.id,
       bookId,
       deviceId || 'default',
+      chapterId,
     );
 
     res.setHeader('Content-Type', mimeType);

@@ -55,7 +55,7 @@ model Book {
   price               Float
   currency            String   @default("NGN")
   durationSec         Int      @default(0)
-  mediaStorageKey     String
+  mediaStorageKey     String?
   published           Boolean  @default(false)
   featured            Boolean  @default(false)
 
@@ -69,10 +69,27 @@ model Book {
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
 
+  chapters            BookChapter[]
   purchases           Purchase[]
   sessions            PlaybackSession[]
 
   @@map("books")
+}
+
+model BookChapter {
+  id             String   @id @default(uuid())
+  bookId         String
+  book           Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  title          String
+  chapterOrder   Int
+  mediaStorageKey String
+  durationSec    Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([bookId, chapterOrder])
+  @@index([bookId])
+  @@map("book_chapters")
 }
 
 model Purchase {
@@ -100,6 +117,8 @@ model PlaybackSession {
   book           Book     @relation(fields: [bookId], references: [id])
   deviceId       String
   progressSec    Int      @default(0)
+  chapterOrder   Int      @default(0)
+  chapterProgressSec Int  @default(0)
   lastActiveAt   DateTime @default(now())
   createdAt      DateTime @default(now())
 

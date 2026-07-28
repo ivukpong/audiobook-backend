@@ -25,7 +25,7 @@ export class AdminController {
   ) {}
 
   @Get('books')
-  allBooks() { return this.books.findAll(false); }
+  allBooks() { return this.books.findAll(false, true); }
 
   @Post('books')
   createBook(@Body() dto: CreateBookDto) { return this.books.create(dto); }
@@ -47,6 +47,9 @@ export class AdminController {
         description: true,
         coverStorageKey: true,
         mediaStorageKey: true,
+        chapters: {
+          select: { id: true, title: true, chapterOrder: true, mediaStorageKey: true, durationSec: true },
+        },
         durationSec: true,
         price: true,
         currency: true,
@@ -62,7 +65,7 @@ export class AdminController {
       author: Boolean(book.author?.trim()),
       description: Boolean(book.description?.trim()) && book.description.trim().length >= 50,
       coverAsset: Boolean(book.coverStorageKey?.trim()),
-      audioAsset: Boolean(book.mediaStorageKey?.trim()),
+      audioAsset: Boolean(book.mediaStorageKey?.trim()) || book.chapters.length > 0,
       duration: book.durationSec > 0,
       pricing: book.price > 0,
       currency: Boolean(book.currency?.trim()),
