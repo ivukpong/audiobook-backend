@@ -7,6 +7,15 @@ import { CreateBookChapterDto, CreateBookDto } from './dto/create-book.dto';
 export class BooksService {
   constructor(private prisma: PrismaService, private storage: StorageService) {}
 
+  private isChapterSchemaError(error: any) {
+    const message = String(error?.message || '').toLowerCase();
+    return (
+      error?.code === 'P2021'
+      || message.includes('book_chapters')
+      || message.includes('unknown field') && message.includes('chapters')
+    );
+  }
+
   private normalizeChapters(chapters?: CreateBookChapterDto[]) {
     if (!chapters?.length) return [];
 
@@ -75,63 +84,122 @@ export class BooksService {
   }
 
   async findAll(publishedOnly = true, includeStorageKeys = false) {
-    const books = await (this.prisma as any).book.findMany({
-      where: publishedOnly ? { published: true } : {},
-      orderBy: [{ featured: 'desc' }, { createdAt: 'desc' }],
-      select: {
-        id: true,
-        title: true,
-        author: true,
-        description: true,
-        coverStorageKey: true,
-        mediaStorageKey: true,
-        price: true,
-        currency: true,
-        durationSec: true,
-        featured: true,
-        published: true,
-        spotifyUrl: true,
-        appleBooksUrl: true,
-        googlePlayUrl: true,
-        audibleUrl: true,
-        findawayUrl: true,
-        createdAt: true,
-        chapters: {
-          select: { id: true, title: true, chapterOrder: true, durationSec: true, mediaStorageKey: true },
-          orderBy: { chapterOrder: 'asc' },
+    let books: any[] = [];
+    try {
+      books = await (this.prisma as any).book.findMany({
+        where: publishedOnly ? { published: true } : {},
+        orderBy: [{ featured: 'desc' }, { createdAt: 'desc' }],
+        select: {
+          id: true,
+          title: true,
+          author: true,
+          description: true,
+          coverStorageKey: true,
+          mediaStorageKey: true,
+          price: true,
+          currency: true,
+          durationSec: true,
+          featured: true,
+          published: true,
+          spotifyUrl: true,
+          appleBooksUrl: true,
+          googlePlayUrl: true,
+          audibleUrl: true,
+          findawayUrl: true,
+          createdAt: true,
+          chapters: {
+            select: { id: true, title: true, chapterOrder: true, durationSec: true, mediaStorageKey: true },
+            orderBy: { chapterOrder: 'asc' },
+          },
         },
-      },
-    });
+      });
+    } catch (error) {
+      if (!this.isChapterSchemaError(error)) throw error;
+
+      books = await (this.prisma as any).book.findMany({
+        where: publishedOnly ? { published: true } : {},
+        orderBy: [{ featured: 'desc' }, { createdAt: 'desc' }],
+        select: {
+          id: true,
+          title: true,
+          author: true,
+          description: true,
+          coverStorageKey: true,
+          mediaStorageKey: true,
+          price: true,
+          currency: true,
+          durationSec: true,
+          featured: true,
+          published: true,
+          spotifyUrl: true,
+          appleBooksUrl: true,
+          googlePlayUrl: true,
+          audibleUrl: true,
+          findawayUrl: true,
+          createdAt: true,
+        },
+      });
+    }
+
     return books.map((book) => this.mapBookForClient(book, includeStorageKeys));
   }
 
   async findOne(id: string, includeStorageKeys = false) {
-    const book = await (this.prisma as any).book.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        title: true,
-        author: true,
-        description: true,
-        coverStorageKey: true,
-        mediaStorageKey: true,
-        price: true,
-        currency: true,
-        durationSec: true,
-        featured: true,
-        published: true,
-        spotifyUrl: true,
-        appleBooksUrl: true,
-        googlePlayUrl: true,
-        audibleUrl: true,
-        findawayUrl: true,
-        createdAt: true,
-        chapters: {
-          select: { id: true, title: true, chapterOrder: true, durationSec: true, mediaStorageKey: true },
-          orderBy: { chapterOrder: 'asc' },
+    let book: any = null;
+    try {
+      book = await (this.prisma as any).book.findUnique({
+        where: { id },
+        select: {
+          id: true,
+          title: true,
+          author: true,
+          description: true,
+          coverStorageKey: true,
+          mediaStorageKey: true,
+          price: true,
+          currency: true,
+          durationSec: true,
+          featured: true,
+          published: true,
+          spotifyUrl: true,
+          appleBooksUrl: true,
+          googlePlayUrl: true,
+          audibleUrl: true,
+          findawayUrl: true,
+          createdAt: true,
+          chapters: {
+            select: { id: true, title: true, chapterOrder: true, durationSec: true, mediaStorageKey: true },
+            orderBy: { chapterOrder: 'asc' },
+          },
         },
-      },
-    });
+      });
+    } catch (error) {
+      if (!this.isChapterSchemaError(error)) throw error;
+
+      book = await (this.prisma as any).book.findUnique({
+        where: { id },
+        select: {
+          id: true,
+          title: true,
+          author: true,
+          description: true,
+          coverStorageKey: true,
+          mediaStorageKey: true,
+          price: true,
+          currency: true,
+          durationSec: true,
+          featured: true,
+          published: true,
+          spotifyUrl: true,
+          appleBooksUrl: true,
+          googlePlayUrl: true,
+          audibleUrl: true,
+          findawayUrl: true,
+          createdAt: true,
+        },
+      });
+    }
+
     if (!book) throw new NotFoundException('Book not found');
     return this.mapBookForClient(book, includeStorageKeys);
   }
