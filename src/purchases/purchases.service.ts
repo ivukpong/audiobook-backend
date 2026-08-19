@@ -41,11 +41,7 @@ export class PurchasesService {
     }
     const event = JSON.parse(rawBody);
     if (event.event === 'charge.success') {
-      const ref = event.data.reference;
-      await this.prisma.purchase.update({
-        where: { paystackRef: ref },
-        data: { status: 'COMPLETED' },
-      });
+      await this.completePurchase(event.data.reference, event.data.metadata);
     }
     return { received: true };
   }
@@ -53,12 +49,35 @@ export class PurchasesService {
   async verifyAndComplete(reference: string) {
     const tx = await this.paystack.verifyTransaction(reference);
     if (tx.status !== 'success') throw new BadRequestException('Payment not successful');
-    const purchase = await this.prisma.purchase.update({
-      where: { paystackRef: reference },
-      data: { status: 'COMPLETED' },
-      include: { book: { select: { id: true, title: true } } },
-    });
-    return purchase;
+    return this.completePurchase(reference, tx.metadata);
+  }
+
+  /**
+   * `paystackRef` gets reassigned to the newest reference whenever a user
+   * re-initiates checkout for a book they haven't paid for yet (abandoned
+   * tab, double-click, retry). If a webhook/verify call for an older
+   * reference lands after that reassignment, the paystackRef lookup below
+   * misses (P2025) even though the payment genuinely succeeded — fall back
+   * to the userId+bookId Paystack echoes back in metadata.
+   */
+  private async completePurchase(
+    reference: string,
+    metadata?: { bookId?: string; userId?: string },
+  ) {
+    try {
+      return await this.prisma.purchase.update({
+        where: { paystackRef: reference },
+        data: { status: 'COMPLETED' },
+        include: { book: { select: { id: true, title: true } } },
+      });
+    } catch (err: any) {
+      if (err?.code !== 'P2025' || !metadata?.userId || !metadata?.bookId) throw err;
+      return this.prisma.purchase.update({
+        where: { userId_bookId: { userId: metadata.userId, bookId: metadata.bookId } },
+        data: { status: 'COMPLETED', paystackRef: reference },
+        include: { book: { select: { id: true, title: true } } },
+      });
+    }
   }
 
   async getUserLibrary(userId: string) {
